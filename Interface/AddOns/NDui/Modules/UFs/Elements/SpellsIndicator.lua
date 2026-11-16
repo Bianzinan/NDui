@@ -125,6 +125,15 @@ local function CreateIndicatorButton(element, options, button)
 	button:SetApplicationCount(count, {formatter = COUNT_FORMATTER})
 end
 
+local indicatorElements = {}
+
+-- Spell ID slots can reject group members before they are recognised; roster changes do not rebuild them.
+local function RefreshSpellsIndicators()
+	for element in pairs(indicatorElements) do
+		element:UpdateAllAuras()
+	end
+end
+
 function UF:CreateSpellsIndicator(self)
 	if not C.db["UFs"]["RaidBuffIndicator"] then return end
 
@@ -138,6 +147,12 @@ function UF:CreateSpellsIndicator(self)
 	local element = self:CreateAuras()
 	element:SetAllPoints(self.Health)
 	element.disableMouse = true
+
+	if not next(indicatorElements) then
+		B:RegisterEvent("PLAYER_ENTERING_WORLD", RefreshSpellsIndicators)
+		B:RegisterEvent("GROUP_ROSTER_UPDATE", RefreshSpellsIndicators)
+	end
+	indicatorElements[element] = true
 
 	local spellSize = C.db["UFs"]["RaidSpellSize"] or 10
 	local indicatorType = C.db["UFs"]["BuffIndicatorType"]
